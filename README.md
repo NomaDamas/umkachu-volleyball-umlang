@@ -13,9 +13,11 @@
   ·
   <a href="#-quick-start">Quick Start</a>
   ·
+  <a href="#-porting-plan">Porting Plan</a>
+  ·
   <a href="#-core-umlang-sample">Core Umlang Sample</a>
   ·
-  <a href="#-does-it-run">Does It Run?</a>
+  <a href="#-research-notes">Research Notes</a>
 </p>
 
 ---
@@ -26,34 +28,76 @@
 | --- | --- |
 | [What is this?](#-what-is-this) | The repo goal and the honest porting boundary. |
 | [Umlang context](#-umlang-context) | Tiny context for how Umlang code is executed here. |
+| [Porting plan](#-porting-plan) | How the project keeps moving toward an all-Umlang rewrite. |
 | [Quick Start](#-quick-start) | Run the committed full Umlang game package, then inspect/regenerate it. |
 | [Core Umlang Sample](#-core-umlang-sample) | A real checked-in `.umm` file that draws a tiny Umkachu court. |
 | [Architecture](#-architecture) | Umlang script -> Rust VM -> Host API -> macroquad. |
 | [Does it run?](#-does-it-run) | What is verified, and what still depends on local GUI/audio runtime. |
 | [Reality check](#-reality-check) | Why this is not a pure Rust-free native Umlang runtime yet. |
+| [Research notes](#-research-notes) | Esolang-as-IR, private code dialects, security caveats, and agent rulesets. |
 | [Controls](#-controls) | Keyboard controls. |
 | [Development](#-development) | Regeneration and test commands. |
 
 ## 🟡 What Is This?
 
-`umkachu-volleyball-umlang` is a full-porting experiment: move as much Pikachu Volleyball-specific
-behavior as possible into **Umlang** code and text ABI files.
+`umkachu-volleyball-umlang` is a full-porting experiment: rewrite Pikachu Volleyball into **Umlang**
+as the game-facing language, while keeping only unavoidable host-machine responsibilities behind a
+generic runner boundary.
 
 The current repo is not pretending that Rust disappeared. Rust is the generic **Umlang VM + Host API**
 that lets Umlang talk to the real machine: window, GPU, keyboard, audio, files, settings, and frame pacing.
-The game-specific state, render declarations, constants, timing, SFX policy, key bindings, and behavior are
-being pulled into generated Umlang and `umlang-*.txt` ABI files.
+The game-specific state, render declarations, constants, timing, SFX policy, key bindings, and behavior live
+in committed generated Umlang chunks plus `umlang-*.txt` ABI files.
 
 ```text
 Umlang owns the game vibe and game-specific behavior.
 Rust owns the generic runner and the OS/GPU/audio/keyboard bridge.
 ```
 
+## 🧭 Porting Plan
+
+The direction is not "leave Rust with the game." The direction is:
+
+```text
+Every Pikachu-specific rule moves to Umlang.
+Every machine-specific primitive stays behind a tiny Host API until Umlang grows a native runtime.
+```
+
+| Stage | Current status | Next move |
+| --- | --- | --- |
+| Game rules | Generated Umlang chunks contain the current loop and behavior. | Keep extracting physics, scoring, AI, animation, and phase rules from generator structure into clearer Umlang modules. |
+| Data ownership | `umlang-*.txt` owns constants, variable slots, render layout, timing, SFX policy, assets, keys, and sprites. | Promote ABI tables into more readable `.umm`-side declarations when the VM gains macros/functions. |
+| Code shape | `scripts/pikachu.umm` imports 38 generated `.umm` body chunks. | Add real Umlang functions/macros/modules so chunks are semantic modules, not only size-based pieces. |
+| Runtime | Rust VM parses Umlang and dispatches negative-output syscalls. | Shrink Host API to a stable device layer: draw, audio, input, storage, clock, random, frame yield. |
+| Endgame | Rust remains the runner. | Either keep Rust as the official runtime or build an Umlang-native runtime/bytecode backend later. |
+
+If the project keeps going, the next language feature worth adding is not more memes. It is **functions**:
+
+```text
+함수 draw_ball
+함수 update_player
+함수 collide_with_net
+함수 play_round_sfx
+가져와 scripts/pikachu_modules/physics.umm
+```
+
+That would let this repo stop treating generated Umlang as line-oriented assembly and start treating it as
+a weird but real project language.
+
 ## 🧠 Umlang Context
 
-In this repository, **Umlang** is the game-facing language. A `.umm` file starts with `어떻게`,
-ends with `이 사람이름이냐ㅋㅋ`, stores numbers in `어/엄` variable slots, prints or calls the host with
-`식...!`, and jumps with `준...`.
+In this repository, **Umlang** is the game-facing language. The context comes from the Korean internet
+meme around `엄준식`, and from the original [`rycont/umjunsik-lang`](https://github.com/rycont/umjunsik-lang)
+project. The meme background is documented by the Namu Wiki article
+[`엄준식(인터넷 밈)`](https://namu.wiki/w/%EC%97%84%EC%A4%80%EC%8B%9D%28%EC%9D%B8%ED%84%B0%EB%84%B7%20%EB%B0%88%29).
+
+The original `umjunsik-lang` README describes the language as an esoteric programming language built around
+the "person name" meme, and documents the core tokens this project follows: `엄`, `준`, `식`, `동탄`,
+`어떻게`, `화이팅!`, punctuation-based integers, `식!` output, `식ㅋ` character output, `동탄?`
+conditionals, and `준` jumps.
+
+A `.umm` file starts with `어떻게`, ends with `이 사람이름이냐ㅋㅋ`, stores numbers in `어/엄` variable slots,
+prints or calls the host with `식...!`, and jumps with `준...`.
 
 Tiny mental model:
 
@@ -164,6 +208,39 @@ umlang-package.txt
 | Host API | Lets Umlang call graphics, input, audio, settings, frame pacing, and arithmetic helpers through syscall opcodes. |
 | macroquad | Replaceable backend for the window, GPU drawing, keyboard, and audio. |
 
+### Umlang-Native Porting Architecture
+
+```text
+                    ┌──────────────────────────────────────────────┐
+                    │              Umlang game package             │
+                    │ scripts/pikachu.umm + pikachu_parts/*.umm    │
+                    └──────────────────────┬───────────────────────┘
+                                           │ 가져와/import expansion
+                    ┌──────────────────────▼───────────────────────┐
+                    │                 Umlang VM                     │
+                    │ parse -> line IR -> variable slots -> jumps   │
+                    └──────────────────────┬───────────────────────┘
+                                           │ negative 식...! syscall
+                    ┌──────────────────────▼───────────────────────┐
+                    │                  Host API                     │
+                    │ draw/input/audio/settings/random/frame yield  │
+                    └──────────────────────┬───────────────────────┘
+                                           │ backend calls
+                    ┌──────────────────────▼───────────────────────┐
+                    │                 macroquad/Rust                │
+                    │ window, GPU, keyboard, audio, file settings   │
+                    └──────────────────────────────────────────────┘
+```
+
+The important boundary is not "Rust vs Umlang" as a vibe argument. The boundary is **semantic ownership**:
+
+| Owned by Umlang | Owned by Host |
+| --- | --- |
+| Round phases, scoring, serve flow, AI movement, collision decisions, animation frame choice, render declarations, SFX policy. | Window creation, GPU draw calls, keyboard polling, audio playback, persistent settings, frame pacing. |
+
+In compiler terms, this repo is slowly turning Pikachu Volleyball into a domain-specific source program where
+Umlang is the high-level game IR and Rust is the VM/backend.
+
 ## ✅ Does It Run?
 
 Short answer: **the runner builds, the generated Umlang parses, and the script reaches frame yield in tests.**
@@ -199,6 +276,47 @@ The honest target is therefore:
 Move game-specific behavior into Umlang.
 Keep host-machine responsibilities behind a generic runner boundary.
 ```
+
+## 🧪 Research Notes
+
+This project is a joke that accidentally touches serious systems topics.
+
+### Esolang As Project IR
+
+An esolang can act like a domain-specific intermediate representation:
+
+| Angle | Why it is interesting |
+| --- | --- |
+| Semantic compression | Game concepts can be encoded in a tiny project-specific instruction set instead of a general-purpose language surface. |
+| Runtime sovereignty | The team owns the VM, syscalls, ABI, and execution semantics. That makes behavior reproducible and inspectable. |
+| Agent specialization | Codex/Claude Code rules can be tuned to the project dialect, ABI files, generated chunks, and VM invariants. |
+| Weird portability | If the Host API is stable, the same `.umm` game package can target different backends. |
+
+### Private Dialects And Security
+
+Could a company create its own weird language, keep a private interpreter, add strict AI-agent rules, and gain
+security? **Some friction, yes. Real security by itself, no.**
+
+| Claim | Practical answer |
+| --- | --- |
+| "Nobody understands our code." | That is obfuscation, not cryptographic protection. It slows casual readers but does not stop a determined analyst. |
+| "Only our interpreter runs it." | Useful for supply-chain control and policy enforcement, but the interpreter becomes a high-value target. |
+| "Codex/Claude rules know the dialect." | Very useful for internal productivity: agents can enforce ABI rules, naming, generation, tests, and threat-model checks. |
+| "Can it protect private logic?" | Only when combined with real controls: repo permissions, secret management, signing, review, sandboxing, audit logs, and encryption. |
+
+The geeky research hypothesis:
+
+```text
+organization-specific esolang
+  + private VM / verifier
+  + generated source chunks
+  + strict agent rules
+  + reproducible tests
+  = a controllable software substrate
+```
+
+Not a magic shield. But as a project-native DSL/IR, it can encode intent, limit allowed operations, and make
+AI-assisted development safer because the assistant has fewer legal moves.
 
 ## 📦 Package ABI
 
