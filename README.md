@@ -26,7 +26,7 @@
 | --- | --- |
 | [What is this?](#-what-is-this) | The repo goal and the honest porting boundary. |
 | [Umlang context](#-umlang-context) | Tiny context for how Umlang code is executed here. |
-| [Quick Start](#-quick-start) | Run a small Umlang sample, then generate and run the full game script. |
+| [Quick Start](#-quick-start) | Run the committed full Umlang game package, then inspect/regenerate it. |
 | [Core Umlang Sample](#-core-umlang-sample) | A real checked-in `.umm` file that draws a tiny Umkachu court. |
 | [Architecture](#-architecture) | Umlang script -> Rust VM -> Host API -> macroquad. |
 | [Does it run?](#-does-it-run) | What is verified, and what still depends on local GUI/audio runtime. |
@@ -65,12 +65,24 @@ Tiny mental model:
 | `어엄.....` | Store a value in variable slot 2. |
 | `식어!` | Execute output; negative values become Host API syscalls. |
 | `준.....` | Jump to a line number. |
+| `가져와 ...` | Include another `.umm` file before execution. |
 
 So yes: the code looks cursed on purpose, but the VM treats it as real executable instructions.
 
 ## 🚀 Quick Start
 
-### 1. Run the checked-in Umlang mini court
+### 1. Run the committed Umkachu Volleyball Umlang package
+
+The full game entry is committed as `scripts/pikachu.umm`, and the generated Umlang body is committed
+as `scripts/pikachu_parts/*.umm` chunks so GitHub's single-file 100MB limit is not hit.
+
+```bash
+cargo run
+```
+
+This runs the Rust Umlang VM, expands the `가져와` imports, and executes the generated Umlang game.
+
+### 2. Run the checked-in Umlang mini court
 
 This is the small promotional sample committed in the repo:
 
@@ -80,29 +92,18 @@ cargo run -- examples/umkachu-core.umm
 
 It runs real Umlang through the same runner and draws a tiny Umkachu court using Host API syscalls.
 
-### 2. Generate the full generated Umlang game script
-
-The full `scripts/pikachu.umm` file is generated locally. It is intentionally not committed because it is
-about 901MB on disk and GitHub rejects files over 100MB.
+### 3. Regenerate the full generated Umlang package
 
 ```bash
 python3 tools/gen_pikachu_umm.py
 ```
 
-### 3. Run Umkachu Volleyball
-
-```bash
-cargo run
-```
-
-The boring shell command launches the cursed payload:
+The regenerated payload is still cursed, just split into importable chunks:
 
 ```umm
 어떻게
-엄..........
-어엄,,,,,
-식어!
-준..........
+가져와 scripts/pikachu_parts/pikachu_0000.umm
+가져와 scripts/pikachu_parts/pikachu_0001.umm
 이 사람이름이냐ㅋㅋ
 ```
 
@@ -144,7 +145,8 @@ That excerpt calls `SYS_DRAW_NUMBER`, then `SYS_WAIT_FRAME`, then jumps back int
 
 ```text
 umlang-package.txt
-  -> scripts/pikachu.umm                 # generated full Umlang game, local only
+  -> scripts/pikachu.umm                 # committed Umlang entry file
+  -> scripts/pikachu_parts/*.umm         # committed generated full game body
   -> examples/umkachu-core.umm           # committed tiny Umlang court sample
   -> umlang-*.txt                        # package ABI owned by game-side data
   -> Rust Umlang VM                      # generic runner, not Pikachu-specific logic
@@ -155,7 +157,8 @@ umlang-package.txt
 | Layer | Responsibility |
 | --- | --- |
 | `examples/umkachu-core.umm` | Small committed Umlang sample that draws a looping mini court. |
-| `scripts/pikachu.umm` | Local generated Umlang program containing the current full game loop and game behavior. |
+| `scripts/pikachu.umm` | Small committed Umlang entry file that imports the full generated game body. |
+| `scripts/pikachu_parts/*.umm` | Committed generated Umlang chunks containing the current full game loop and game behavior. |
 | `umlang-*.txt` | Package ABI files for constants, render layout, timing, menu curves, SFX policy, variables, keys, assets, RNG, sprites, animation, and settings. |
 | Rust VM | Parses and executes Umlang syntax: variables, expressions, jumps, conditions, output, exit, and negative-output syscalls. |
 | Host API | Lets Umlang call graphics, input, audio, settings, frame pacing, and arithmetic helpers through syscall opcodes. |
@@ -172,7 +175,7 @@ What is verified in CI-style commands:
 | `python3 -m py_compile tools/gen_pikachu_umm.py` | The generator is syntactically valid Python. |
 | `cargo fmt --check` | Rust formatting is clean. |
 | `cargo check` | The Rust Umlang VM/Host API builds. |
-| `cargo test generated_pikachu_script_reaches_first_frame_yield` | The generated `scripts/pikachu.umm` parses and reaches the first frame yield. |
+| `cargo test generated_pikachu_script_reaches_first_frame_yield` | The generated chunked `scripts/pikachu.umm` package parses and reaches the first frame yield. |
 
 What still depends on your local machine:
 
@@ -186,7 +189,7 @@ What still depends on your local machine:
 | Requested pure-Umlang dream | Current honest state |
 | --- | --- |
 | Graphics/audio/keyboard entirely in Umlang | Umlang has no native OS/GPU/audio/keyboard runtime here, so Rust Host API handles it. |
-| Commit `scripts/pikachu.umm` directly | The generated file is about 901MB, so it is generated locally instead of committed. |
+| Commit the generated Umlang body | Done by splitting the old 901MB single blob into 38 committed `scripts/pikachu_parts/*.umm` files below GitHub's 100MB single-file limit. |
 | Hand-write the whole game in pure Umlang | The full generated code is intentionally produced by Python because manual 290k-line Umlang editing is not maintainable. |
 | Remove Rust completely | Not possible in this repo yet. Rust is the current Umlang runner and OS/GPU/audio bridge. |
 
@@ -235,7 +238,7 @@ Keep host-machine responsibilities behind a generic runner boundary.
 
 ## 🛠 Development
 
-Do not hand-edit `scripts/pikachu.umm`; regenerate it.
+Do not hand-edit `scripts/pikachu.umm` or `scripts/pikachu_parts/*.umm`; regenerate them.
 
 ```bash
 python3 tools/gen_pikachu_umm.py
@@ -245,8 +248,8 @@ cargo test generated_menu_abi_defines_original_menu_animation_curves
 cargo test generated_pikachu_script_reaches_first_frame_yield
 ```
 
-Full `cargo test` works, but it can be slow because the test binary includes the huge generated
-Umlang script.
+Full `cargo test` works, but tests that execute the generated game can be slow because the committed
+Umlang chunks are large.
 
 ## 🧾 Provenance
 

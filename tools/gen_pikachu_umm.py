@@ -23,6 +23,8 @@ ANIMATION_PATH = "umlang-animation.txt"
 SFX_PATH = "umlang-sfx.txt"
 TIMING_PATH = "umlang-timing.txt"
 MENU_PATH = "umlang-menu.txt"
+SCRIPT_PARTS_DIR = "scripts/pikachu_parts"
+SCRIPT_CHUNK_TARGET_BYTES = 24 * 1024 * 1024
 
 
 def manifest_value(key: str, default: str) -> str:
@@ -553,7 +555,7 @@ class Program:
     def call(self, opcode: int, *args: int) -> None:
         self.call_expr(opcode, *(num(arg) for arg in args))
 
-    def render(self) -> str:
+    def render_body_lines(self) -> list[str]:
         body: list[str] = []
 
         def replace_label(match: re.Match[str]) -> str:
@@ -567,7 +569,60 @@ class Program:
             if "@@" in line:
                 raise RuntimeError(f"unresolved label in {line}")
             body.append(line)
+        return body
+
+    def render(self) -> str:
+        body = self.render_body_lines()
         return "\n".join(["어떻게", *body, "이 사람이름이냐ㅋㅋ", ""])
+
+
+def write_chunked_script(program: Program, output_path: str) -> None:
+    os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
+    os.makedirs(SCRIPT_PARTS_DIR, exist_ok=True)
+
+    for entry in os.scandir(SCRIPT_PARTS_DIR):
+        if entry.is_file() and entry.name.endswith(".umm"):
+            os.remove(entry.path)
+
+    part_paths: list[str] = []
+    chunk_lines: list[str] = []
+    chunk_bytes = 0
+
+    def flush_chunk() -> None:
+        nonlocal chunk_lines, chunk_bytes
+        if not chunk_lines:
+            return
+        part_name = f"pikachu_{len(part_paths):04d}.umm"
+        part_path = os.path.join(SCRIPT_PARTS_DIR, part_name)
+        tmp_part_path = f"{part_path}.tmp"
+        with open(tmp_part_path, "w", encoding="utf-8") as part:
+            part.write("\n".join(chunk_lines))
+            part.write("\n")
+        os.replace(tmp_part_path, part_path)
+        part_paths.append(part_path.replace("\\", "/"))
+        chunk_lines = []
+        chunk_bytes = 0
+
+    for line in program.render_body_lines():
+        line_bytes = len(line.encode("utf-8")) + 1
+        if chunk_lines and chunk_bytes + line_bytes > SCRIPT_CHUNK_TARGET_BYTES:
+            flush_chunk()
+        chunk_lines.append(line)
+        chunk_bytes += line_bytes
+    flush_chunk()
+
+    tmp_path = f"{output_path}.tmp"
+    try:
+        with open(tmp_path, "w", encoding="utf-8") as entry:
+            entry.write("어떻게\n")
+            for part_path in part_paths:
+                entry.write(f"가져와 {part_path}\n")
+            entry.write("이 사람이름이냐ㅋㅋ\n")
+        os.replace(tmp_path, output_path)
+    except Exception:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+        raise
 
 
 # VM variable slots used by the script.
@@ -4031,17 +4086,7 @@ def main() -> None:
     draw_intro_scene(p, "game_end_restart")
     wait_and_loop(p)
 
-    output_path = MAIN_SCRIPT_PATH
-    os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
-    tmp_path = f"{output_path}.tmp"
-    try:
-        with open(tmp_path, "w", encoding="utf-8") as f:
-            f.write(p.render())
-        os.replace(tmp_path, output_path)
-    except Exception:
-        if os.path.exists(tmp_path):
-            os.remove(tmp_path)
-        raise
+    write_chunked_script(p, MAIN_SCRIPT_PATH)
 
 
 if __name__ == "__main__":

@@ -1,3 +1,9 @@
+use std::{
+    collections::BTreeSet,
+    fs,
+    path::{Path, PathBuf},
+};
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Step {
     Running,
@@ -18,6 +24,20 @@ pub struct Vm {
 
 impl Vm {
     pub fn parse(source: &str) -> Result<Self, String> {
+        let expanded = expand_imports(source, None, &mut BTreeSet::new())?;
+        Self::parse_expanded(&expanded)
+    }
+
+    pub fn parse_file(path: impl AsRef<Path>) -> Result<Self, String> {
+        let source = load_source_file(path.as_ref())?;
+        Self::parse_expanded(&source)
+    }
+
+    pub fn load_source_file(path: impl AsRef<Path>) -> Result<String, String> {
+        load_source_file(path.as_ref())
+    }
+
+    fn parse_expanded(source: &str) -> Result<Self, String> {
         let normalized = source.replace("\r\n", "\n").replace('\r', "\n");
         let parts: Vec<&str> = if normalized.contains('~') {
             normalized.split('~').collect()
@@ -206,6 +226,79 @@ impl Vm {
             Ok(0)
         }
     }
+}
+
+fn load_source_file(path: &Path) -> Result<String, String> {
+    let canonical = path
+        .canonicalize()
+        .map_err(|err| format!("failed to resolve {}: {err}", path.display()))?;
+    let source = fs::read_to_string(&canonical)
+        .map_err(|err| format!("failed to read {}: {err}", canonical.display()))?;
+    let base_dir = canonical.parent().unwrap_or_else(|| Path::new("."));
+    expand_imports(&source, Some(base_dir), &mut BTreeSet::new())
+}
+
+fn expand_imports(
+    source: &str,
+    base_dir: Option<&Path>,
+    stack: &mut BTreeSet<PathBuf>,
+) -> Result<String, String> {
+    let normalized = source.replace("\r\n", "\n").replace('\r', "\n");
+    let parts: Vec<&str> = if normalized.contains('~') {
+        normalized.split('~').collect()
+    } else {
+        normalized.lines().collect()
+    };
+    let mut expanded = String::new();
+
+    for raw in parts {
+        let line = raw.trim();
+        if let Some(path) = import_path(line) {
+            let resolved = resolve_import_path(path, base_dir)?;
+            let source = fs::read_to_string(&resolved)
+                .map_err(|err| format!("failed to read {}: {err}", resolved.display()))?;
+            if !stack.insert(resolved.clone()) {
+                return Err(format!("cyclic Umlang import: {}", resolved.display()));
+            }
+            let imported_base = resolved.parent().unwrap_or_else(|| Path::new("."));
+            expanded.push_str(&expand_imports(&source, Some(imported_base), stack)?);
+            stack.remove(&resolved);
+        } else {
+            expanded.push_str(raw);
+            expanded.push('\n');
+        }
+    }
+
+    Ok(expanded)
+}
+
+fn import_path(line: &str) -> Option<&str> {
+    line.strip_prefix("가져와 ")
+        .or_else(|| line.strip_prefix("include "))
+        .or_else(|| line.strip_prefix("import "))
+        .map(|path| path.trim().trim_matches('"'))
+        .filter(|path| !path.is_empty())
+}
+
+fn resolve_import_path(path: &str, base_dir: Option<&Path>) -> Result<PathBuf, String> {
+    let path = Path::new(path);
+    let joined = if path.is_absolute() {
+        path.to_path_buf()
+    } else {
+        base_dir.unwrap_or_else(|| Path::new(".")).join(path)
+    };
+    if let Ok(canonical) = joined.canonicalize() {
+        return Ok(canonical);
+    }
+    if !path.is_absolute() {
+        if let Ok(canonical) = path.canonicalize() {
+            return Ok(canonical);
+        }
+    }
+    Err(format!(
+        "failed to resolve Umlang import {}",
+        joined.display()
+    ))
 }
 
 #[cfg(test)]
@@ -984,8 +1077,8 @@ mod tests {
 
     #[test]
     fn generated_pikachu_script_reaches_first_frame_yield() {
-        let source = include_str!("../scripts/pikachu.umm");
-        let mut vm = Vm::parse(source).expect("generated 엄랭 script should parse");
+        let mut vm =
+            Vm::parse_file("scripts/pikachu.umm").expect("generated 엄랭 package should parse");
         let mut host = FakeHost::default();
 
         assert_eq!(

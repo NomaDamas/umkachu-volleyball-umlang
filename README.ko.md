@@ -26,7 +26,7 @@
 | --- | --- |
 | [이게 뭐야?](#-이게-뭐야) | 레포 목표와 솔직한 포팅 경계. |
 | [엄랭 context](#-엄랭-context) | 이 레포에서 엄랭이 어떻게 실행되는지. |
-| [Quick Start](#-quick-start) | 작은 엄랭 샘플 실행 후 전체 게임 엄랭 생성/실행. |
+| [Quick Start](#-quick-start) | 커밋된 전체 엄랭 게임 package 실행 후 샘플/재생성 확인. |
 | [코어 엄랭 샘플](#-코어-엄랭-샘플) | 실제 커밋된 `.umm` 파일로 동작 원리 보기. |
 | [아키텍처](#-아키텍처) | 엄랭 script -> Rust VM -> Host API -> macroquad. |
 | [작동하나?](#-작동하나) | 검증된 것과 로컬 GUI/audio에 의존하는 것. |
@@ -65,12 +65,25 @@ Host API를 호출하고, `준...`으로 줄 번호 점프를 합니다.
 | `어엄.....` | 변수 슬롯 2에 값 저장. |
 | `식어!` | 출력 실행. 음수 값이면 Host API syscall. |
 | `준.....` | 줄 번호로 점프. |
+| `가져와 ...` | 실행 전에 다른 `.umm` 파일을 include. |
 
 겉보기에는 밈인데, VM 입장에서는 실제 실행 명령입니다.
 
 ## 🚀 Quick Start
 
-### 1. 커밋된 작은 엄랭 코트 실행
+### 1. 커밋된 엄카츄 배구 엄랭 package 실행
+
+전체 게임 entry는 `scripts/pikachu.umm`로 커밋되어 있고, 생성된 엄랭 본체는
+`scripts/pikachu_parts/*.umm` chunk로 커밋되어 있습니다. 그래서 GitHub 단일 파일 100MB 제한을
+피하면서도 실제 피카츄배구 본체 엄랭 코드가 repo 안에 들어갑니다.
+
+```bash
+cargo run
+```
+
+Rust 엄랭 VM이 `가져와` import를 펼치고, 생성된 엄랭 게임을 실행합니다.
+
+### 2. 커밋된 작은 엄랭 코트 실행
 
 레포에 들어 있는 홍보용 미니 샘플입니다.
 
@@ -80,29 +93,18 @@ cargo run -- examples/umkachu-core.umm
 
 같은 실행기를 통해 실제 엄랭이 돌고, Host API syscall로 작은 엄카츄 코트를 그립니다.
 
-### 2. 전체 게임 엄랭 파일 생성
-
-전체 `scripts/pikachu.umm`는 로컬에서 생성합니다. 파일이 약 901MB라 GitHub 100MB 제한 때문에
-커밋하지 않습니다.
+### 3. 전체 게임 엄랭 package 재생성
 
 ```bash
 python3 tools/gen_pikachu_umm.py
 ```
 
-### 3. 엄카츄 배구 실행
-
-```bash
-cargo run
-```
-
-평범한 셸 명령이 실행하는 payload는 이런 느낌입니다.
+재생성된 payload는 여전히 지옥이지만, import 가능한 chunk로 쪼개집니다.
 
 ```umm
 어떻게
-엄..........
-어엄,,,,,
-식어!
-준..........
+가져와 scripts/pikachu_parts/pikachu_0000.umm
+가져와 scripts/pikachu_parts/pikachu_0001.umm
 이 사람이름이냐ㅋㅋ
 ```
 
@@ -145,7 +147,8 @@ cargo run
 
 ```text
 umlang-package.txt
-  -> scripts/pikachu.umm                 # 로컬 생성 전체 엄랭 게임
+  -> scripts/pikachu.umm                 # 커밋된 엄랭 entry 파일
+  -> scripts/pikachu_parts/*.umm         # 커밋된 생성 엄랭 본체
   -> examples/umkachu-core.umm           # 커밋된 작은 엄랭 코트 샘플
   -> umlang-*.txt                        # 게임 데이터 소유 ABI
   -> Rust 엄랭 VM                         # 피카츄 전용이 아닌 범용 실행기
@@ -156,7 +159,8 @@ umlang-package.txt
 | 레이어 | 책임 |
 | --- | --- |
 | `examples/umkachu-core.umm` | 루프 도는 작은 엄카츄 코트를 그리는 커밋된 엄랭 샘플. |
-| `scripts/pikachu.umm` | 현재 전체 게임 루프와 게임 동작을 담은 로컬 생성 엄랭 프로그램. |
+| `scripts/pikachu.umm` | 전체 생성 게임 본체를 import하는 작은 커밋된 엄랭 entry 파일. |
+| `scripts/pikachu_parts/*.umm` | 현재 전체 게임 루프와 게임 동작을 담은 커밋된 생성 엄랭 chunk. |
 | `umlang-*.txt` | 상수, 렌더 배치, 타이밍, 메뉴 커브, SFX 정책, 변수, 키, 자산, RNG, 스프라이트, 애니메이션, 설정 ABI. |
 | Rust VM | 엄랭 문법 실행: 변수, 식, 점프, 조건, 출력, 종료, 음수 출력 syscall. |
 | Host API | 엄랭이 그래픽, 입력, 오디오, 설정, frame pacing, 산술 helper를 호출하는 경계. |
@@ -173,7 +177,7 @@ umlang-package.txt
 | `python3 -m py_compile tools/gen_pikachu_umm.py` | generator Python 문법 정상. |
 | `cargo fmt --check` | Rust formatting 정상. |
 | `cargo check` | Rust 엄랭 VM/Host API 빌드 정상. |
-| `cargo test generated_pikachu_script_reaches_first_frame_yield` | 생성된 `scripts/pikachu.umm`가 parse되고 첫 frame yield까지 감. |
+| `cargo test generated_pikachu_script_reaches_first_frame_yield` | chunk로 쪼개진 `scripts/pikachu.umm` package가 parse되고 첫 frame yield까지 감. |
 
 로컬 환경에 의존하는 것:
 
@@ -187,7 +191,7 @@ umlang-package.txt
 | 요구한 순수 엄랭 꿈 | 현재 솔직한 상태 |
 | --- | --- |
 | 그래픽/오디오/키보드까지 전부 엄랭 | 이 레포의 엄랭은 자체 OS/GPU/audio/keyboard 런타임이 없어서 Rust Host API가 담당. |
-| `scripts/pikachu.umm` 직접 커밋 | 생성 파일이 약 901MB라 GitHub에 직접 커밋하지 않고 로컬 생성 방식으로 둠. |
+| 생성 엄랭 본체 커밋 | 기존 901MB 단일 blob을 38개 `scripts/pikachu_parts/*.umm` 파일로 쪼개 GitHub 단일 파일 100MB 제한 아래로 커밋. |
 | 전체 로직의 순수 수작업 엄랭화 | 생성 결과가 거대해서 Python generator가 엄랭을 생성함. 수작업 29만 줄 편집은 유지보수 불가. |
 | Rust 완전 제거 | 아직 불가능. Rust는 현재 엄랭 실행기 + OS/GPU/audio 브리지 역할. |
 
@@ -236,7 +240,7 @@ umlang-package.txt
 
 ## 🛠 개발
 
-`scripts/pikachu.umm`는 직접 고치지 말고 재생성하세요.
+`scripts/pikachu.umm`와 `scripts/pikachu_parts/*.umm`는 직접 고치지 말고 재생성하세요.
 
 ```bash
 python3 tools/gen_pikachu_umm.py
@@ -246,7 +250,7 @@ cargo test generated_menu_abi_defines_original_menu_animation_curves
 cargo test generated_pikachu_script_reaches_first_frame_yield
 ```
 
-전체 `cargo test`도 가능하지만, 거대한 생성 엄랭 파일을 test binary에 포함해서 느릴 수 있습니다.
+전체 `cargo test`도 가능하지만, 생성 게임을 실행하는 테스트는 커밋된 엄랭 chunk가 커서 느릴 수 있습니다.
 
 ## 🧾 출처
 

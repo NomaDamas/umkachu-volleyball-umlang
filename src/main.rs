@@ -1,6 +1,6 @@
 mod host;
 
-use std::{env, fs};
+use std::env;
 
 use host::Host;
 use macroquad::prelude::*;
@@ -58,9 +58,8 @@ async fn main() {
                 package::DEFAULT_MAX_STEPS_PER_FRAME,
             )
         });
-    let source = fs::read_to_string(&script_path)
-        .unwrap_or_else(|err| panic!("failed to read {script_path}: {err}"));
-    let mut vm = Vm::parse(&source).unwrap_or_else(|err| panic!("엄랭 parse error: {err}"));
+    let mut vm =
+        Vm::parse_file(&script_path).unwrap_or_else(|err| panic!("엄랭 parse error: {err}"));
     let mut host = Host::new(asset_root, settings_prefix).await;
 
     loop {
