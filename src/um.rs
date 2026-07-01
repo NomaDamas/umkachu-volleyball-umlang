@@ -15,8 +15,54 @@ pub trait HostOps {
     fn syscall(&mut self, opcode: i32, vm: &mut Vm) -> Result<Step, String>;
 }
 
+#[derive(Debug, Clone)]
+enum Instruction {
+    Raw(String),
+    Noop,
+    Conditional {
+        condition: Expr,
+        statement: Box<Instruction>,
+    },
+    Jump {
+        target: Expr,
+    },
+    Exit {
+        code: Option<Expr>,
+    },
+    Assign {
+        index: usize,
+        value: Option<Expr>,
+    },
+    OutputNumber {
+        value: Option<Expr>,
+    },
+    OutputChar {
+        value: Option<Expr>,
+    },
+}
+
+#[derive(Debug, Clone)]
+struct Expr {
+    terms: Vec<ExprTerm>,
+}
+
+#[derive(Debug, Clone, Copy)]
+struct ExprTerm {
+    load_var: Option<usize>,
+    offset: i32,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum PendingStep {
+    Running,
+    HostSyscall(i32),
+    PrintNumber(i32),
+    PrintChar(Option<char>),
+    Exited(i32),
+}
+
 pub struct Vm {
-    lines: Vec<Option<String>>,
+    instructions: Vec<Instruction>,
     vars: Vec<i32>,
     pc: usize,
     exit: Option<i32>,
@@ -62,22 +108,22 @@ impl Vm {
             return Err("program must end with 이 사람이름이냐ㅋㅋ".to_string());
         }
 
-        let mut lines = vec![None];
+        let mut instructions = vec![Instruction::Noop];
         for raw in parts.iter().skip(1) {
             let line = raw.trim();
             if line == "이 사람이름이냐ㅋㅋ" {
                 break;
             }
             if line.is_empty() {
-                lines.push(None);
+                instructions.push(Instruction::Noop);
             } else {
-                lines.push(Some(line.to_string()));
+                instructions.push(Instruction::Raw(line.to_string()));
             }
         }
-        lines.push(None);
+        instructions.push(Instruction::Noop);
 
         Ok(Self {
-            lines,
+            instructions,
             vars: vec![0; 4096],
             pc: 0,
             exit: None,
@@ -90,16 +136,28 @@ impl Vm {
         max_steps: usize,
     ) -> Result<Step, String> {
         let mut steps = 0usize;
-        while self.pc < self.lines.len() {
-            if let Some(code) = self.lines[self.pc].clone() {
-                self.pc += 1;
-                match self.run_statement(&code, host)? {
+        while self.pc < self.instructions.len() {
+            let instruction_index = self.pc;
+            self.pc += 1;
+            self.compile_instruction(instruction_index)?;
+            let action = execute_instruction(
+                &self.instructions[instruction_index],
+                &mut self.vars,
+                &mut self.pc,
+                &mut self.exit,
+                self.instructions.len(),
+            )?;
+            match action {
+                PendingStep::Running => {}
+                PendingStep::HostSyscall(opcode) => match host.syscall(opcode, self)? {
                     Step::Running => {}
                     Step::Yielded => return Ok(Step::Yielded),
                     Step::Exited(code) => return Ok(Step::Exited(code)),
-                }
-            } else {
-                self.pc += 1;
+                },
+                PendingStep::PrintNumber(value) => println!("{value}"),
+                PendingStep::PrintChar(None) => println!(),
+                PendingStep::PrintChar(Some(ch)) => print!("{ch}"),
+                PendingStep::Exited(code) => return Ok(Step::Exited(code)),
             }
 
             steps += 1;
@@ -127,105 +185,180 @@ impl Vm {
         self.vars[index] = value;
     }
 
-    fn run_statement<H: HostOps>(&mut self, code: &str, host: &mut H) -> Result<Step, String> {
-        if let Some(rest) = code.strip_prefix("동탄") {
-            let (condition, statement) = rest
-                .split_once('?')
-                .ok_or_else(|| format!("invalid 동탄 statement: {code}"))?;
-            if self.eval(condition)? == 0 {
-                return self.run_statement(statement, host);
-            }
-            return Ok(Step::Running);
+    fn compile_instruction(&mut self, index: usize) -> Result<(), String> {
+        let raw = match &self.instructions[index] {
+            Instruction::Raw(code) => Some(code.clone()),
+            _ => None,
+        };
+        if let Some(raw) = raw {
+            self.instructions[index] = parse_statement(&raw)?;
         }
+        Ok(())
+    }
+}
 
-        if let Some(rest) = code.strip_prefix("준") {
-            let line = self.eval(rest)?;
+fn parse_statement(code: &str) -> Result<Instruction, String> {
+    if let Some(rest) = code.strip_prefix("동탄") {
+        let (condition, statement) = rest
+            .split_once('?')
+            .ok_or_else(|| format!("invalid 동탄 statement: {code}"))?;
+        return Ok(Instruction::Conditional {
+            condition: parse_expr(condition),
+            statement: Box::new(parse_statement(statement)?),
+        });
+    }
+
+    if let Some(rest) = code.strip_prefix("준") {
+        return Ok(Instruction::Jump {
+            target: parse_expr(rest),
+        });
+    }
+
+    if let Some(rest) = code.strip_prefix("화이팅!") {
+        return Ok(Instruction::Exit {
+            code: parse_optional_expr(rest),
+        });
+    }
+
+    if let Some((left, right)) = code.split_once('엄') {
+        return Ok(Instruction::Assign {
+            index: left.matches('어').count() + 1,
+            value: parse_optional_expr(right),
+        });
+    }
+
+    if code.starts_with('식') && code.ends_with('!') {
+        let expr = &code['식'.len_utf8()..code.len() - '!'.len_utf8()];
+        return Ok(Instruction::OutputNumber {
+            value: parse_optional_expr(expr),
+        });
+    }
+
+    if code.starts_with('식') && code.ends_with('ㅋ') {
+        let expr = &code['식'.len_utf8()..code.len() - 'ㅋ'.len_utf8()];
+        return Ok(Instruction::OutputChar {
+            value: parse_optional_expr(expr),
+        });
+    }
+
+    Err(format!("unknown statement: {code}"))
+}
+
+fn parse_optional_expr(expr: &str) -> Option<Expr> {
+    (!expr.trim().is_empty()).then(|| parse_expr(expr))
+}
+
+fn parse_expr(expr: &str) -> Expr {
+    let terms = expr
+        .split(' ')
+        .filter(|term| !term.is_empty())
+        .map(parse_expr_term)
+        .collect();
+    Expr { terms }
+}
+
+fn parse_expr_term(term: &str) -> ExprTerm {
+    let mut load_count = 0usize;
+    let mut offset = 0i32;
+    for ch in term.chars() {
+        match ch {
+            '어' => load_count += 1,
+            '.' => offset = offset.wrapping_add(1),
+            ',' => offset = offset.wrapping_sub(1),
+            _ => {}
+        }
+    }
+    ExprTerm {
+        load_var: (load_count > 0).then_some(load_count),
+        offset,
+    }
+}
+
+fn execute_instruction(
+    instruction: &Instruction,
+    vars: &mut Vec<i32>,
+    pc: &mut usize,
+    exit: &mut Option<i32>,
+    instruction_count: usize,
+) -> Result<PendingStep, String> {
+    match instruction {
+        Instruction::Raw(code) => Err(format!("uncompiled statement: {code}")),
+        Instruction::Noop => Ok(PendingStep::Running),
+        Instruction::Conditional {
+            condition,
+            statement,
+        } => {
+            if eval_expr(vars, condition) == 0 {
+                execute_instruction(statement, vars, pc, exit, instruction_count)
+            } else {
+                Ok(PendingStep::Running)
+            }
+        }
+        Instruction::Jump { target } => {
+            let line = eval_expr(vars, target);
             if line <= 0 {
                 return Err(format!("준 target out of range: {line}"));
             }
             let target = line as usize - 1;
-            if target >= self.lines.len() {
+            if target >= instruction_count {
                 return Err(format!("준 target out of range: {line}"));
             }
-            self.pc = target;
-            return Ok(Step::Running);
+            *pc = target;
+            Ok(PendingStep::Running)
         }
-
-        if let Some(rest) = code.strip_prefix("화이팅!") {
-            let code = if rest.trim().is_empty() {
-                0
-            } else {
-                self.eval(rest)?
-            };
-            self.exit = Some(code);
-            return Ok(Step::Exited(code));
+        Instruction::Exit { code } => {
+            let code = eval_optional_expr(vars, code);
+            *exit = Some(code);
+            Ok(PendingStep::Exited(code))
         }
-
-        if let Some((left, right)) = code.split_once('엄') {
-            let index = left.matches('어').count() + 1;
-            let value = if right.trim().is_empty() {
-                0
-            } else {
-                self.eval(right)?
-            };
-            self.set_var(index, value);
-            return Ok(Step::Running);
+        Instruction::Assign { index, value } => {
+            let value = eval_optional_expr(vars, value);
+            set_var(vars, *index, value);
+            Ok(PendingStep::Running)
         }
-
-        if code.starts_with('식') && code.ends_with('!') {
-            let expr = &code['식'.len_utf8()..code.len() - '!'.len_utf8()];
-            let value = if expr.trim().is_empty() {
-                0
-            } else {
-                self.eval(expr)?
-            };
+        Instruction::OutputNumber { value } => {
+            let value = eval_optional_expr(vars, value);
             if value < 0 {
-                return host.syscall(value, self);
-            }
-            println!("{value}");
-            return Ok(Step::Running);
-        }
-
-        if code.starts_with('식') && code.ends_with('ㅋ') {
-            let expr = &code['식'.len_utf8()..code.len() - 'ㅋ'.len_utf8()];
-            if expr.trim().is_empty() {
-                println!();
+                Ok(PendingStep::HostSyscall(value))
             } else {
-                let value = self.eval(expr)?;
-                if let Some(ch) = char::from_u32(value as u32) {
-                    print!("{ch}");
-                }
+                Ok(PendingStep::PrintNumber(value))
             }
-            return Ok(Step::Running);
         }
-
-        Err(format!("unknown statement: {code}"))
-    }
-
-    fn eval(&mut self, expr: &str) -> Result<i32, String> {
-        let mut result = 1i32;
-        let mut saw_term = false;
-        for term in expr.split(' ') {
-            if term.is_empty() {
-                continue;
-            }
-            saw_term = true;
-            let load_count = term.matches('어').count();
-            let mut value = if load_count > 0 {
-                self.get_var(load_count)
-            } else {
-                0
+        Instruction::OutputChar { value } => {
+            let Some(value) = value else {
+                return Ok(PendingStep::PrintChar(None));
             };
-            value = value.wrapping_add(term.matches('.').count() as i32);
-            value = value.wrapping_sub(term.matches(',').count() as i32);
-            result = result.wrapping_mul(value);
-        }
-        if saw_term {
-            Ok(result)
-        } else {
-            Ok(0)
+            Ok(PendingStep::PrintChar(char::from_u32(
+                eval_expr(vars, value) as u32,
+            )))
         }
     }
+}
+
+fn eval_optional_expr(vars: &[i32], expr: &Option<Expr>) -> i32 {
+    expr.as_ref().map_or(0, |expr| eval_expr(vars, expr))
+}
+
+fn eval_expr(vars: &[i32], expr: &Expr) -> i32 {
+    if expr.terms.is_empty() {
+        return 0;
+    }
+
+    expr.terms.iter().fold(1i32, |result, term| {
+        let value = term
+            .load_var
+            .and_then(|index| vars.get(index).copied())
+            .unwrap_or(0)
+            .wrapping_add(term.offset);
+        result.wrapping_mul(value)
+    })
+}
+
+fn set_var(vars: &mut Vec<i32>, index: usize, value: i32) {
+    if index >= vars.len() {
+        vars.resize(index + 1, 0);
+    }
+    vars[index] = value;
 }
 
 fn load_source_file(path: &Path) -> Result<String, String> {

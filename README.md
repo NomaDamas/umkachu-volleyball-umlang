@@ -32,7 +32,7 @@
 | [Core Umlang](#-core-umlang) | The tiny executable pattern behind the full game. |
 | [Architecture](#-architecture) | Umlang source, package ABI, Rust VM, Host API, macroquad backend. |
 | [Package ABI](#-package-abi) | The ABI files now live in `package/abi/`. |
-| [Research Notes](#-research-notes) | Esolang-as-IR, private dialects, and agent-tuned development. |
+| [Research Notes](#-research-notes) | Esolang-as-IR, private dialect security, and agent-tuned development. |
 | [Controls](#-controls) | Keyboard actions. |
 | [Development](#-development) | Rust-only build and validation commands. |
 
@@ -118,17 +118,7 @@ inside the repository as actual Umlang source.
 
 The checked-in sample lives at [`examples/umkachu-core.umm`](examples/umkachu-core.umm).
 
-The core syscall pattern is:
-
-```text
-1. Put a Host API opcode into variable slot 1.
-2. Put syscall arguments into variable slots 2, 3, 4...
-3. Execute `식어!`.
-4. The Rust VM dispatches the opcode to the Host API.
-5. Umlang continues with jumps, variables, and frame yields.
-```
-
-Example excerpt:
+It is intentionally written as Umlang source, not pseudocode:
 
 ```umm
 어떻게
@@ -145,7 +135,28 @@ Example excerpt:
 이 사람이름이냐ㅋㅋ
 ```
 
-That pattern is the small version of the full Umkachu Volleyball package.
+The core syscall pattern is:
+
+```text
+1. Put a Host API opcode into variable slot 1.
+2. Put syscall arguments into variable slots 2, 3, 4...
+3. Execute `식어!`.
+4. The Rust VM dispatches the opcode to the Host API.
+5. Umlang continues with jumps, variables, and frame yields.
+```
+
+That sample is the smallest readable version of the full Umkachu Volleyball loop: put a Host opcode in
+Umlang variable slot 1, put arguments in later slots, execute `식어!`, then jump back into the frame loop.
+
+Another excerpt from the full package entry shows how the real body is imported:
+
+```umm
+어떻게
+가져와 scripts/pikachu_parts/pikachu_0000.umm
+가져와 scripts/pikachu_parts/pikachu_0001.umm
+가져와 scripts/pikachu_parts/pikachu_0002.umm
+이 사람이름이냐ㅋㅋ
+```
 
 ## 🏗 Architecture
 
@@ -180,9 +191,13 @@ That pattern is the small version of the full Umkachu Volleyball package.
 | --- | --- |
 | `.umm` package | Game-facing executable source and imported body chunks. |
 | `package/abi` | Stable data contract shared by the VM, host, tests, and Umlang package. |
-| Rust VM | Umlang parser, import expander, statement evaluator, jump engine, syscall dispatcher. |
+| Rust VM | Umlang parser, import expander, lazy bytecode compiler, jump engine, syscall dispatcher. |
 | Host API | Device boundary for graphics, input, audio, settings, arithmetic helpers, frame yield. |
 | macroquad | Concrete desktop backend. |
+
+The VM preserves the Korean/Umlang source surface. It does not need to re-interpret Hangul strings forever:
+the source is loaded as text, then each executed line is compiled once into a small internal instruction and
+cached. The visible language stays Umlang; the hot path becomes VM bytecode.
 
 ## 📦 Package ABI
 
@@ -216,10 +231,33 @@ Umkachu treats an esolang as a project IR:
 | Runtime sovereignty | The project owns syntax, ABI, VM semantics, syscalls, and tests. |
 | Dialect compression | Game concepts become project-specific instructions and data contracts. |
 | Agent specialization | Codex/Claude rules can target the dialect, ABI invariants, and checked-in `.umm` package. |
-| Private dialects | A company could pair a custom language, private VM, signed packages, and strict agent rules to narrow the legal move space. |
+| Private dialect security | A company can pair a custom language, private VM, signed packages, and strict agent rules to narrow the legal move space. |
 
-This is not cryptography by itself. The useful research angle is control: a narrow language surface plus a
-verifiable runtime can make code review, generation, sandboxing, and reproducibility more explicit.
+### LLMs And Private Dialects
+
+GPT-class models may have seen public `umjunsik-lang` material, but they should not be assumed to know a
+company's private dialect, ABI, verifier, package format, or interpreter behavior. That is useful: the model
+can be given project-specific rules, while outsiders only see an unfamiliar source surface unless they also
+obtain the interpreter, ABI, and runtime policy.
+
+### Security Significance
+
+A private language is not cryptography by itself. The real security value appears when the dialect is part of
+a controlled software substrate:
+
+```text
+organization-specific language
+  + private interpreter / verifier
+  + signed package ABI
+  + sandboxed Host API
+  + audit logs
+  + Codex/Claude rules tuned to the dialect
+  = narrower and more enforceable development surface
+```
+
+That can improve policy enforcement, review discipline, reproducibility, and accidental data-flow control.
+It should still be paired with normal security controls: permissions, secrets management, signing, encryption,
+review, sandboxing, and monitoring.
 
 ## 🎮 Controls
 

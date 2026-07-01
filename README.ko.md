@@ -32,7 +32,7 @@
 | [코어 엄랭](#-코어-엄랭) | 전체 게임이 쓰는 최소 실행 패턴. |
 | [아키텍처](#-아키텍처) | 엄랭 소스, 패키지 ABI, Rust VM, Host API, macroquad backend. |
 | [패키지 ABI](#-패키지-abi) | `package/abi/`로 모은 ABI 파일들. |
-| [연구 메모](#-연구-메모) | 난해어 IR, private dialect, agent 최적화 개발. |
+| [연구 메모](#-연구-메모) | 난해어 IR, private dialect 보안, agent 최적화 개발. |
 | [조작](#-조작) | 키보드 조작. |
 | [개발](#-개발) | Rust-only 빌드와 검증 명령. |
 
@@ -118,17 +118,7 @@ cargo run -- examples/umkachu-core.umm
 
 커밋된 샘플은 [`examples/umkachu-core.umm`](examples/umkachu-core.umm)에 있습니다.
 
-핵심 syscall 패턴은 이렇습니다.
-
-```text
-1. 변수 슬롯 1에 Host API opcode를 넣는다.
-2. 변수 슬롯 2, 3, 4...에 syscall 인자를 넣는다.
-3. `식어!`를 실행한다.
-4. Rust VM이 opcode를 Host API로 dispatch한다.
-5. 엄랭은 변수, 점프, frame yield로 계속 진행한다.
-```
-
-예시 일부:
+이 샘플은 설명용 pseudocode가 아니라 실제 엄랭 소스입니다.
 
 ```umm
 어떻게
@@ -145,7 +135,28 @@ cargo run -- examples/umkachu-core.umm
 이 사람이름이냐ㅋㅋ
 ```
 
-이 패턴이 전체 엄카츄 배구 패키지의 작은 버전입니다.
+핵심 syscall 패턴은 이렇습니다.
+
+```text
+1. 변수 슬롯 1에 Host API opcode를 넣는다.
+2. 변수 슬롯 2, 3, 4...에 syscall 인자를 넣는다.
+3. `식어!`를 실행한다.
+4. Rust VM이 opcode를 Host API로 dispatch한다.
+5. 엄랭은 변수, 점프, frame yield로 계속 진행한다.
+```
+
+이 샘플은 전체 엄카츄 배구 루프의 가장 작은 버전입니다. 엄랭 변수 슬롯 1에 Host opcode를 넣고,
+뒤쪽 슬롯에 인자를 넣고, `식어!`로 실행한 다음 frame loop로 다시 점프합니다.
+
+실제 전체 패키지 entry는 아래처럼 엄랭 본체를 import합니다.
+
+```umm
+어떻게
+가져와 scripts/pikachu_parts/pikachu_0000.umm
+가져와 scripts/pikachu_parts/pikachu_0001.umm
+가져와 scripts/pikachu_parts/pikachu_0002.umm
+이 사람이름이냐ㅋㅋ
+```
 
 ## 🏗 아키텍처
 
@@ -180,9 +191,13 @@ cargo run -- examples/umkachu-core.umm
 | --- | --- |
 | `.umm` 패키지 | 게임 쪽 실행 소스와 import되는 본체 chunk. |
 | `package/abi` | VM, Host, 테스트, 엄랭 패키지가 공유하는 안정적인 데이터 계약. |
-| Rust VM | 엄랭 파서, import expander, statement evaluator, jump engine, syscall dispatcher. |
+| Rust VM | 엄랭 파서, import expander, lazy bytecode compiler, jump engine, syscall dispatcher. |
 | Host API | 그래픽, 입력, 오디오, 설정, 산술 helper, frame yield를 담당하는 device boundary. |
 | macroquad | 실제 데스크톱 backend. |
+
+VM은 한국어/엄랭 소스 표면을 보존합니다. 다만 실행 중에 한글 문자열을 영원히 매번 다시 해석할
+필요는 없습니다. 소스는 텍스트로 로드하고, 실제 실행된 줄은 한 번만 내부 instruction으로 컴파일해
+캐시합니다. 눈에 보이는 언어는 엄랭이고, hot path는 VM bytecode가 됩니다.
 
 ## 📦 패키지 ABI
 
@@ -216,10 +231,33 @@ cargo run -- examples/umkachu-core.umm
 | Runtime sovereignty | 프로젝트가 syntax, ABI, VM semantics, syscall, test를 직접 소유합니다. |
 | Dialect compression | 게임 개념을 프로젝트 전용 instruction과 data contract로 압축합니다. |
 | Agent specialization | Codex/Claude rule을 dialect, ABI invariant, 커밋된 `.umm` 패키지에 맞춰 튜닝할 수 있습니다. |
-| Private dialect | 조직 전용 언어, private VM, signed package, 엄격한 agent rule을 결합하면 허용된 개발 행동 공간을 좁힐 수 있습니다. |
+| Private dialect security | 조직 전용 언어, private VM, signed package, 엄격한 agent rule을 결합하면 허용된 개발 행동 공간을 좁힐 수 있습니다. |
 
-이 자체가 암호학은 아닙니다. 흥미로운 지점은 통제입니다. 좁은 언어 표면과 검증 가능한 runtime은
-코드 리뷰, 생성, sandboxing, 재현성을 더 명시적으로 만들 수 있습니다.
+### LLM과 Private Dialect
+
+GPT 계열 모델이 공개된 `umjunsik-lang` 자료 일부를 봤을 가능성은 있습니다. 하지만 특정 기업의
+private dialect, ABI, verifier, package format, interpreter behavior까지 알고 있다고 보면 안 됩니다.
+이 지점이 쓸모 있습니다. 내부 agent에는 프로젝트 전용 rule을 주고, 외부인은 interpreter, ABI,
+runtime policy 없이는 낯선 source surface만 보게 됩니다.
+
+### 보안적 의의
+
+자기 조직만의 언어 자체가 암호학은 아닙니다. 의미가 생기는 지점은 그 언어가 통제 가능한 software
+substrate의 일부가 될 때입니다.
+
+```text
+organization-specific language
+  + private interpreter / verifier
+  + signed package ABI
+  + sandboxed Host API
+  + audit logs
+  + dialect에 맞춘 Codex/Claude rules
+  = 더 좁고 강제 가능한 개발 표면
+```
+
+이 구조는 policy enforcement, review discipline, reproducibility, accidental data-flow control을 강화할 수
+있습니다. 그래도 repo 권한, secret 관리, signing, encryption, review, sandboxing, monitoring 같은 기본
+보안 장치와 같이 써야 합니다.
 
 ## 🎮 조작
 
