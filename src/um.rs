@@ -643,6 +643,22 @@ mod tests {
         }
     }
 
+    #[test]
+    fn checked_in_umkachu_core_sample_reaches_first_frame_yield() {
+        let source = include_str!("../examples/umkachu-core.umm");
+        let mut vm = Vm::parse(source).expect("checked-in core Umlang sample should parse");
+        let mut host = FakeHost::default();
+
+        assert_eq!(
+            vm.run_until_yield(&mut host, 600_000)
+                .expect("checked-in core Umlang sample should yield"),
+            Step::Yielded
+        );
+        assert_eq!(host.yields, 1);
+        assert_eq!(host.configured_windows.as_slice(), &[[640, 360]]);
+        assert_eq!(host.defined_colors.len(), 4);
+    }
+
     fn has_sprite(host: &FakeHost, sprite: [i32; 8]) -> bool {
         host.drawn_sprites.iter().any(|drawn| *drawn == sprite)
     }
