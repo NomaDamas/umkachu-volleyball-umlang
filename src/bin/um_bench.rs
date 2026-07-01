@@ -155,6 +155,17 @@ fn main() {
                 .unwrap_or(3);
             run_pikachu(iterations)
         }
+        "pikachu-frames" => {
+            let frames = args
+                .next()
+                .and_then(|value| value.parse().ok())
+                .unwrap_or(60);
+            let iterations = args
+                .next()
+                .and_then(|value| value.parse().ok())
+                .unwrap_or(3);
+            run_pikachu_frames(frames, iterations)
+        }
         _ => Err(format!("unknown benchmark mode: {mode}")),
     };
 
@@ -237,6 +248,52 @@ fn run_pikachu(iterations: usize) -> Result<(), String> {
         "rust,pikachu_first_frame,{iterations},{syscall_count},{:.3},{:.3},{:.3},{:.3},0,{:.3},{:.3}",
         parse.mean, run.mean, total.mean, total.median, total.min, total.max
     );
+    Ok(())
+}
+
+fn run_pikachu_frames(frames: usize, iterations: usize) -> Result<(), String> {
+    let mut parse_times = Vec::with_capacity(iterations);
+    let mut run_times = Vec::with_capacity(iterations);
+    let mut total_times = Vec::with_capacity(iterations);
+    let mut syscall_count = 0usize;
+    let mut yielded_frames = 0usize;
+
+    for _ in 0..iterations {
+        let start = Instant::now();
+        let mut vm = Vm::parse_file("scripts/pikachu.umm")?;
+        let parsed = Instant::now();
+        let mut host = BenchHost::default();
+        let mut frames_this_run = 0usize;
+        for _ in 0..frames {
+            match vm.run_until_yield(&mut host, 600_000)? {
+                Step::Yielded => frames_this_run += 1,
+                Step::Exited(_) => break,
+                step => {
+                    return Err(format!(
+                        "pikachu frame benchmark ended with unexpected step: {step:?}"
+                    ))
+                }
+            }
+        }
+        let ended = Instant::now();
+        syscall_count = host.syscalls;
+        yielded_frames = frames_this_run;
+        parse_times.push(parsed.duration_since(start));
+        run_times.push(ended.duration_since(parsed));
+        total_times.push(ended.duration_since(start));
+    }
+
+    let parse = stats(&parse_times);
+    let run = stats(&run_times);
+    let total = stats(&total_times);
+    let throughput = yielded_frames as f64 / (run.mean / 1000.0);
+
+    print_csv_header();
+    println!(
+        "rust,pikachu_vm_frames,{iterations},{yielded_frames},{:.3},{:.3},{:.3},{:.3},{:.0},{:.3},{:.3}",
+        parse.mean, run.mean, total.mean, total.median, throughput, total.min, total.max
+    );
+    eprintln!("syscalls={syscall_count}");
     Ok(())
 }
 

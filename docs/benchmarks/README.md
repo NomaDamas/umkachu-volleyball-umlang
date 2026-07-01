@@ -22,22 +22,28 @@ package with a no-op Host API until the first frame yield.
 
 | Runner | Workload | Throughput | Rust-relative | Signal |
 | --- | --- | ---: | ---: | --- |
-| Rust | 100,000 Umkachu/Umlang assignment-expression ops | 3,501,623 instr/s | 1.00x | Baseline runner used by the Umkachu package. |
-| Node.js | 100,000 Umkachu/Umlang assignment-expression ops | 1,462,814 instr/s | 0.42x | JavaScript runner signal for a future Node backend. |
-| Python | 100,000 Umkachu/Umlang assignment-expression ops | 553,960 instr/s | 0.16x | Python-style runner signal for scripting-heavy experiments. |
+| Rust | 100,000 Umkachu/Umlang assignment-expression ops | 3,416,924 instr/s | 1.00x | Baseline runner used by the Umkachu package. |
+| Node.js | 100,000 Umkachu/Umlang assignment-expression ops | 1,343,716 instr/s | 0.39x | JavaScript runner signal for a future Node backend. |
+| Python | 100,000 Umkachu/Umlang assignment-expression ops | 558,516 instr/s | 0.16x | Python-style runner signal for scripting-heavy experiments. |
 
 ## Full Results
 
 | Runtime | Workload | Iterations | Units | Parse mean | Run mean | Total mean | Throughput |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| rust | micro_assign_expr | 7 | 100000 | 14.562 ms | 28.558 ms | 43.121 ms | 3,501,623/s |
-| node | micro_assign_expr | 7 | 100000 | 8.007 ms | 68.361 ms | 76.369 ms | 1,462,814/s |
-| python | micro_assign_expr | 7 | 100000 | 16.706 ms | 180.518 ms | 197.225 ms | 553,960/s |
-| rust | pikachu_first_frame | 3 | 4528 | 1809.346 ms | 8.695 ms | 1818.041 ms | - |
+| rust | micro_assign_expr | 7 | 100000 | 16.400 ms | 29.266 ms | 45.666 ms | 3,416,924/s |
+| node | micro_assign_expr | 7 | 100000 | 6.607 ms | 74.421 ms | 81.027 ms | 1,343,716/s |
+| python | micro_assign_expr | 7 | 100000 | 15.506 ms | 179.046 ms | 194.552 ms | 558,516/s |
+| rust | pikachu_first_frame | 3 | 4528 | 1881.417 ms | 9.564 ms | 1890.981 ms | - |
 
 ## Porting Signal
 
 - The micro workload isolates the cost of Korean/Umlang text parsing, lazy instruction compilation, variable-slot writes, and expression evaluation.
 - The `pikachu_first_frame` row uses the committed `scripts/pikachu.umm` package and a no-op Host API to measure how long the Rust VM takes to expand imports and reach the first game frame yield.
-- The current Pikachu first-frame benchmark reached a frame yield in 1818.0 ms on this machine, including import expansion and lazy compilation.
+- The current Pikachu first-frame benchmark reached a frame yield in 1891.0 ms on this machine, including import expansion and lazy compilation.
 - Higher instruction throughput helps this port because the game package is intentionally huge `.umm` text; faster VM dispatch means more room for physics, AI, input, and render syscalls before each frame budget is exhausted.
+
+## Cross-Port Matrix
+
+`tools/bench_pikachu_ports.py` compares the original reference target, the JS port, the Rust port, and
+the current Umkachu/Umlang runners with the measurements that can be automated without opening a game window.
+It writes `pikachu-port-results.csv`, `pikachu-port-comparison.svg`, and `pikachu-port-comparison.md`.

@@ -11,13 +11,13 @@
 <line class="axis" x1="655.5" y1="88" x2="655.5" y2="292"/>
 <line class="axis" x1="824.0" y1="88" x2="824.0" y2="292"/>
 <text class="label" x="32" y="123">Rust</text>
-<rect x="150" y="96" width="147.4" height="42" rx="10" fill="#d56b3f"/>
-<text class="value" x="309.4" y="123">43.1 ms</text>
+<rect x="150" y="96" width="158.2" height="42" rx="10" fill="#d56b3f"/>
+<text class="value" x="320.2" y="123">45.7 ms</text>
 <text class="label" x="32" y="193">Node</text>
-<rect x="150" y="166" width="261.0" height="42" rx="10" fill="#4d9f4a"/>
-<text class="value" x="423.0" y="193">76.4 ms</text>
+<rect x="150" y="166" width="280.7" height="42" rx="10" fill="#4d9f4a"/>
+<text class="value" x="442.7" y="193">81.0 ms</text>
 <text class="label" x="32" y="263">Python</text>
 <rect x="150" y="236" width="674.0" height="42" rx="10" fill="#3975a6"/>
-<text class="value" x="836.0" y="263">197.2 ms</text>
+<text class="value" x="836.0" y="263">194.6 ms</text>
 <text class="note" x="32" y="330">Benchmark script: tools/bench_umlang_runtimes.py · lower is better</text>
 </svg>

@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="484" viewBox="0 0 1080 484" role="img">
+<style>
+.bg{fill:#101820}.title{fill:#f8f1df;font:700 25px sans-serif}.sub{fill:#cdbf9b;font:14px sans-serif}.label{fill:#f8f1df;font:700 14px sans-serif}.metric{fill:#9dadbd;font:12px monospace}.value{fill:#f8f1df;font:700 13px monospace}.axis{stroke:#3b4755;stroke-width:1}.note{fill:#9dadbd;font:12px sans-serif}
+</style>
+<rect class="bg" x="0" y="0" width="1080" height="484" rx="22"/>
+<text class="title" x="32" y="42">Pikachu Volleyball Port Benchmark Matrix</text>
+<text class="sub" x="32" y="68">Core tick, Umlang VM microbench, and Umkachu frame-yield results on this machine</text>
+<line class="axis" x1="310.0" y1="96" x2="310.0" y2="426"/>
+<line class="axis" x1="455.0" y1="96" x2="455.0" y2="426"/>
+<line class="axis" x1="600.0" y1="96" x2="600.0" y2="426"/>
+<line class="axis" x1="745.0" y1="96" x2="745.0" y2="426"/>
+<line class="axis" x1="890.0" y1="96" x2="890.0" y2="426"/>
+<text class="label" x="32" y="122">NomaDamas/Pikatchu-Volleyball-Rust · R</text>
+<text class="metric" x="32" y="142">core_physics_tick</text>
+<rect x="310" y="104" width="580.0" height="32" rx="9" fill="#d56b3f"/>
+<text class="value" x="902.0" y="125">4.52M/s</text>
+<text class="label" x="32" y="180">gorisanson/pikachu-volleyball · Node.j</text>
+<text class="metric" x="32" y="200">core_physics_tick</text>
+<rect x="310" y="162" width="576.2" height="32" rx="9" fill="#d56b3f"/>
+<text class="value" x="898.2" y="183">4.09M/s</text>
+<text class="label" x="32" y="238">Umkachu Volleyball · Rust Umlang VM</text>
+<text class="metric" x="32" y="258">umlang_micro_assign_expr</text>
+<rect x="310" y="220" width="569.4" height="32" rx="9" fill="#4d9f4a"/>
+<text class="value" x="891.4" y="241">3.42M/s</text>
+<text class="label" x="32" y="296">Umkachu Volleyball · Node.js Umlang ru</text>
+<text class="metric" x="32" y="316">umlang_micro_assign_expr</text>
+<rect x="310" y="278" width="534.1" height="32" rx="9" fill="#4d9f4a"/>
+<text class="value" x="856.1" y="299">1.34M/s</text>
+<text class="label" x="32" y="354">Umkachu Volleyball · Python-style Umla</text>
+<text class="metric" x="32" y="374">umlang_micro_assign_expr</text>
+<rect x="310" y="336" width="500.9" height="32" rx="9" fill="#4d9f4a"/>
+<text class="value" x="822.9" y="357">558.5K/s</text>
+<text class="label" x="32" y="412">Umkachu Volleyball · Rust Umlang VM</text>
+<text class="metric" x="32" y="432">umlang_vm_frame_yield</text>
+<rect x="310" y="394" width="332.3" height="32" rx="9" fill="#3975a6"/>
+<text class="value" x="654.3" y="415">6.5K/s</text>
+<text class="note" x="32" y="460">Log-scale bar widths; benchmark classes are not direct FPS equivalents.</text>
+</svg>

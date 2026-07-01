@@ -386,6 +386,12 @@ def write_report(rows):
             "- The `pikachu_first_frame` row uses the committed `scripts/pikachu.umm` package and a no-op Host API to measure how long the Rust VM takes to expand imports and reach the first game frame yield.",
             f"- The current Pikachu first-frame benchmark reached a frame yield in {float(pikachu['total_mean_ms']):.1f} ms on this machine, including import expansion and lazy compilation.",
             "- Higher instruction throughput helps this port because the game package is intentionally huge `.umm` text; faster VM dispatch means more room for physics, AI, input, and render syscalls before each frame budget is exhausted.",
+            "",
+            "## Cross-Port Matrix",
+            "",
+            "`tools/bench_pikachu_ports.py` compares the original reference target, the JS port, the Rust port, and",
+            "the current Umkachu/Umlang runners with the measurements that can be automated without opening a game window.",
+            "It writes `pikachu-port-results.csv`, `pikachu-port-comparison.svg`, and `pikachu-port-comparison.md`.",
         ]
     )
     report.write_text("\n".join(lines) + "\n", encoding="utf-8")

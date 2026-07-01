@@ -290,18 +290,37 @@ package with a no-op Host API until the first frame yield.
 
 | Runner | Workload | Throughput | Rust-relative | Signal |
 | --- | --- | ---: | ---: | --- |
-| Rust | 100,000 Umkachu/Umlang assignment-expression ops | 3,501,623 instr/s | 1.00x | Baseline runner used by the Umkachu package. |
-| Node.js | 100,000 Umkachu/Umlang assignment-expression ops | 1,462,814 instr/s | 0.42x | JavaScript runner signal for a future Node backend. |
-| Python | 100,000 Umkachu/Umlang assignment-expression ops | 553,960 instr/s | 0.16x | Python-style runner signal for scripting-heavy experiments. |
+| Rust | 100,000 Umkachu/Umlang assignment-expression ops | 3,416,924 instr/s | 1.00x | Baseline runner used by the Umkachu package. |
+| Node.js | 100,000 Umkachu/Umlang assignment-expression ops | 1,343,716 instr/s | 0.39x | JavaScript runner signal for a future Node backend. |
+| Python | 100,000 Umkachu/Umlang assignment-expression ops | 558,516 instr/s | 0.16x | Python-style runner signal for scripting-heavy experiments. |
 
 ### Full Benchmark Table
 
 | Runtime | Workload | Mean parse | Mean run | Mean total | Throughput |
 | --- | --- | ---: | ---: | ---: | ---: |
-| Rust | 100,000 Umlang assignment/expression statements | 14.562 ms | 28.558 ms | 43.121 ms | 3,501,623 instr/s |
-| Node.js | 100,000 Umlang assignment/expression statements | 8.007 ms | 68.361 ms | 76.369 ms | 1,462,814 instr/s |
-| Python | 100,000 Umlang assignment/expression statements | 16.706 ms | 180.518 ms | 197.225 ms | 553,960 instr/s |
-| Rust | `scripts/pikachu.umm` first frame | 1809.346 ms | 8.695 ms | 1818.041 ms | - |
+| Rust | 100,000 Umlang assignment/expression statements | 16.400 ms | 29.266 ms | 45.666 ms | 3,416,924 instr/s |
+| Node.js | 100,000 Umlang assignment/expression statements | 6.607 ms | 74.421 ms | 81.027 ms | 1,343,716 instr/s |
+| Python | 100,000 Umlang assignment/expression statements | 15.506 ms | 179.046 ms | 194.552 ms | 558,516 instr/s |
+| Rust | `scripts/pikachu.umm` first frame | 1881.417 ms | 9.564 ms | 1890.981 ms | - |
+
+### Pikachu Port Benchmark Matrix
+
+<p align="center">
+  <img src="docs/benchmarks/pikachu-port-comparison.svg" alt="Pikachu Volleyball port benchmark matrix">
+</p>
+
+This matrix compares what can be measured without opening a game window. It is not one universal FPS number:
+JS/Rust ports use headless core physics ticks, while Umkachu uses VM instruction and frame-yield throughput.
+
+| Target | Runtime | Benchmark | Mean total | Throughput | Scope |
+| --- | --- | --- | ---: | ---: | --- |
+| Original Pikachu Volleyball | native binary | direct original FPS | - | - | Original binary is not committed here; direct FPS needs an emulator/manual harness. |
+| gorisanson/pikachu-volleyball | Node.js `physics.js` | `core_physics_tick` | 61.100 ms | 4.09M/s | Original-logic physics tick, render/audio excluded. |
+| NomaDamas/Pikatchu-Volleyball-Rust | Rust `pikachu_core` | `core_physics_tick` | 55.328 ms | 4.52M/s | Rust core physics tick, macroquad render/audio excluded. |
+| Umkachu Volleyball | Rust Umlang VM | `umlang_micro_assign_expr` | 45.666 ms | 3.42M/s | Synthetic `.umm` VM workload, not game FPS. |
+| Umkachu Volleyball | Node.js Umlang runner | `umlang_micro_assign_expr` | 81.027 ms | 1.34M/s | Alternative Umlang runner baseline. |
+| Umkachu Volleyball | Python-style Umlang runner | `umlang_micro_assign_expr` | 194.552 ms | 558.5K/s | Alternative Umlang runner baseline. |
+| Umkachu Volleyball | Rust Umlang VM | `umlang_vm_frame_yield` | 1730.180 ms | 6.5K/s | Committed `scripts/pikachu.umm`, no-op Host API, render/audio excluded. |
 
 For the Pikachu Volleyball port, this matters because the checked-in `.umm` package is intentionally large.
 Fast VM dispatch gives the port more budget for physics, AI, input handling, render syscalls, and frame pacing.
@@ -312,6 +331,7 @@ Reproduce:
 
 ```bash
 python3 tools/bench_umlang_runtimes.py
+python3 tools/bench_pikachu_ports.py
 ```
 
 Detailed output lives in [`docs/benchmarks`](docs/benchmarks).
