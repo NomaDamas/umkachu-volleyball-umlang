@@ -36,6 +36,7 @@
 | [Package ABI](#-package-abi) | The ABI files now live in `package/abi/`. |
 | [Future Work](#-future-work-korean-native-programming-surface) | Moving Korean logic, tone, and context into programming-language design. |
 | [Benchmark](#-profiling-benchmark) | Rust, Node.js, and Python-style Umlang runtime performance. |
+| [Pikachu Port Benchmark Matrix](#pikachu-port-benchmark-matrix) | Original, JavaScript, Rust, and Umkachu benchmark comparison. |
 | [Research Notes](#-research-notes) | Esolang-as-IR, private dialects, and agent-tuned language design. |
 | [Controls](#-controls) | Keyboard actions. |
 | [Development](#-development) | Rust-only build and validation commands. |

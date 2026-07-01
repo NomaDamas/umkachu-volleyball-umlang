@@ -34,6 +34,7 @@
 | [패키지 ABI](#-패키지-abi) | `package/abi/`로 모은 ABI 파일들. |
 | [Future Work](#-future-work-한국어로-코딩하는-가능성) | 한국어 로직과 맥락을 프로그래밍 언어 표면으로 옮기는 실험. |
 | [Benchmark](#-프로파일링-benchmark) | Rust, Node.js, Python 스타일 엄랭 실행 성능 비교. |
+| [Pikachu Volleyball port 비교](#pikachu-volleyball-port-비교) | 원본, JavaScript, Rust, 엄카츄 벤치마크 비교. |
 | [Research](#-research) | 난해어 IR, private dialect 보안, agent 최적화 개발. |
 | [조작](#-조작) | 키보드 조작. |
 | [개발](#-개발) | Rust-only 빌드와 검증 명령. |
