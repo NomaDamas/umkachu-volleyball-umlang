@@ -1,5 +1,5 @@
 runtime,workload,iterations,units,parse_mean_ms,run_mean_ms,total_mean_ms,total_median_ms,throughput_units_per_s,total_min_ms,total_max_ms
-rust,micro_assign_expr,7,100000,16.400,29.266,45.666,45.331,3416924,44.167,47.480
-node,micro_assign_expr,7,100000,6.607,74.421,81.027,79.072,1343716,74.098,90.019
-python,micro_assign_expr,7,100000,15.506,179.046,194.552,194.317,558516,187.659,205.564
-rust,pikachu_first_frame,3,4528,1881.417,9.564,1890.981,1875.546,0,1759.445,2037.951
+rust,micro_assign_expr,7,100000,16.540,30.573,47.113,46.966,3270868,44.252,50.443
+node,micro_assign_expr,7,100000,8.124,70.357,78.481,76.356,1421330,73.752,87.105
+python,micro_assign_expr,7,100000,15.187,175.111,190.298,191.205,571066,186.363,193.916
+rust,pikachu_first_frame,3,4528,1786.909,8.955,1795.864,1757.285,0,1729.051,1901.255

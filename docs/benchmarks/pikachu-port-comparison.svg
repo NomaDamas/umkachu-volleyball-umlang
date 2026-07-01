@@ -13,26 +13,26 @@
 <text class="label" x="32" y="122">NomaDamas/Pikatchu-Volleyball-Rust · R</text>
 <text class="metric" x="32" y="142">core_physics_tick</text>
 <rect x="310" y="104" width="580.0" height="32" rx="9" fill="#d56b3f"/>
-<text class="value" x="902.0" y="125">4.52M/s</text>
+<text class="value" x="902.0" y="125">4.33M/s</text>
 <text class="label" x="32" y="180">gorisanson/pikachu-volleyball · Node.j</text>
 <text class="metric" x="32" y="200">core_physics_tick</text>
-<rect x="310" y="162" width="576.2" height="32" rx="9" fill="#d56b3f"/>
-<text class="value" x="898.2" y="183">4.09M/s</text>
+<rect x="310" y="162" width="578.9" height="32" rx="9" fill="#d56b3f"/>
+<text class="value" x="900.9" y="183">4.21M/s</text>
 <text class="label" x="32" y="238">Umkachu Volleyball · Rust Umlang VM</text>
 <text class="metric" x="32" y="258">umlang_micro_assign_expr</text>
-<rect x="310" y="220" width="569.4" height="32" rx="9" fill="#4d9f4a"/>
-<text class="value" x="891.4" y="241">3.42M/s</text>
+<rect x="310" y="220" width="569.3" height="32" rx="9" fill="#4d9f4a"/>
+<text class="value" x="891.3" y="241">3.27M/s</text>
 <text class="label" x="32" y="296">Umkachu Volleyball · Node.js Umlang ru</text>
 <text class="metric" x="32" y="316">umlang_micro_assign_expr</text>
-<rect x="310" y="278" width="534.1" height="32" rx="9" fill="#4d9f4a"/>
-<text class="value" x="856.1" y="299">1.34M/s</text>
+<rect x="310" y="278" width="537.7" height="32" rx="9" fill="#4d9f4a"/>
+<text class="value" x="859.7" y="299">1.42M/s</text>
 <text class="label" x="32" y="354">Umkachu Volleyball · Python-style Umla</text>
 <text class="metric" x="32" y="374">umlang_micro_assign_expr</text>
-<rect x="310" y="336" width="500.9" height="32" rx="9" fill="#4d9f4a"/>
-<text class="value" x="822.9" y="357">558.5K/s</text>
+<rect x="310" y="336" width="503.1" height="32" rx="9" fill="#4d9f4a"/>
+<text class="value" x="825.1" y="357">571.1K/s</text>
 <text class="label" x="32" y="412">Umkachu Volleyball · Rust Umlang VM</text>
 <text class="metric" x="32" y="432">umlang_vm_frame_yield</text>
-<rect x="310" y="394" width="332.3" height="32" rx="9" fill="#3975a6"/>
-<text class="value" x="654.3" y="415">6.5K/s</text>
+<rect x="310" y="394" width="333.8" height="32" rx="9" fill="#3975a6"/>
+<text class="value" x="655.8" y="415">6.6K/s</text>
 <text class="note" x="32" y="460">Log-scale bar widths; benchmark classes are not direct FPS equivalents.</text>
 </svg>

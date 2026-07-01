@@ -283,18 +283,18 @@ Future Work는 더 한국어다운 프로그래밍 언어를 실험하는 방향
 
 | 실행기 | workload | 처리량 | Rust 기준 | 의미 |
 | --- | --- | ---: | ---: | --- |
-| Rust | 100,000 Umkachu/Umlang assignment-expression ops | 3,416,924 instr/s | 1.00x | 현재 엄카츄 패키지가 쓰는 기준 VM. |
-| Node.js | 100,000 Umkachu/Umlang assignment-expression ops | 1,343,716 instr/s | 0.39x | Node backend를 만들 때 보는 JavaScript 실행기 신호. |
-| Python | 100,000 Umkachu/Umlang assignment-expression ops | 558,516 instr/s | 0.16x | 스크립팅 중심 실행기 실험용 기준점. |
+| Rust | 100,000 Umkachu/Umlang assignment-expression ops | 3,270,868 instr/s | 1.00x | 현재 엄카츄 패키지가 쓰는 기준 VM. |
+| Node.js | 100,000 Umkachu/Umlang assignment-expression ops | 1,421,330 instr/s | 0.43x | Node backend를 만들 때 보는 JavaScript 실행기 신호. |
+| Python | 100,000 Umkachu/Umlang assignment-expression ops | 571,066 instr/s | 0.17x | 스크립팅 중심 실행기 실험용 기준점. |
 
 ### 전체 Benchmark 표
 
 | Runtime | Workload | 평균 parse | 평균 run | 평균 total | 처리량 |
 | --- | --- | ---: | ---: | ---: | ---: |
-| Rust | 100,000 엄랭 assignment/expression | 16.400 ms | 29.266 ms | 45.666 ms | 3,416,924 instr/s |
-| Node.js | 100,000 엄랭 assignment/expression | 6.607 ms | 74.421 ms | 81.027 ms | 1,343,716 instr/s |
-| Python | 100,000 엄랭 assignment/expression | 15.506 ms | 179.046 ms | 194.552 ms | 558,516 instr/s |
-| Rust | `scripts/pikachu.umm` first frame | 1881.417 ms | 9.564 ms | 1890.981 ms | - |
+| Rust | 100,000 엄랭 assignment/expression | 16.540 ms | 30.573 ms | 47.113 ms | 3,270,868 instr/s |
+| Node.js | 100,000 엄랭 assignment/expression | 8.124 ms | 70.357 ms | 78.481 ms | 1,421,330 instr/s |
+| Python | 100,000 엄랭 assignment/expression | 15.187 ms | 175.111 ms | 190.298 ms | 571,066 instr/s |
+| Rust | `scripts/pikachu.umm` first frame | 1786.909 ms | 8.955 ms | 1795.864 ms | - |
 
 ### Pikachu Volleyball port 비교
 
@@ -308,12 +308,12 @@ JS/Rust 포트는 core physics tick이고, 엄카츄는 VM instruction 처리량
 | 대상 | 실행기 | benchmark | 평균 total | 처리량 | 범위 |
 | --- | --- | --- | ---: | ---: | --- |
 | Original Pikachu Volleyball | native binary | direct original FPS | - | - | 원본 바이너리는 이 레포에 없어서 emulator/manual harness가 필요합니다. |
-| gorisanson/pikachu-volleyball | Node.js `physics.js` | `core_physics_tick` | 61.100 ms | 4.09M/s | 원본 로직 기반 physics tick, render/audio 제외. |
-| NomaDamas/Pikatchu-Volleyball-Rust | Rust `pikachu_core` | `core_physics_tick` | 55.328 ms | 4.52M/s | Rust core physics tick, macroquad render/audio 제외. |
-| Umkachu Volleyball | Rust Umlang VM | `umlang_micro_assign_expr` | 45.666 ms | 3.42M/s | 합성 `.umm` VM workload, 게임 FPS 아님. |
-| Umkachu Volleyball | Node.js Umlang runner | `umlang_micro_assign_expr` | 81.027 ms | 1.34M/s | 대체 엄랭 실행기 기준점. |
-| Umkachu Volleyball | Python-style Umlang runner | `umlang_micro_assign_expr` | 194.552 ms | 558.5K/s | 대체 엄랭 실행기 기준점. |
-| Umkachu Volleyball | Rust Umlang VM | `umlang_vm_frame_yield` | 1730.180 ms | 6.5K/s | 커밋된 `scripts/pikachu.umm`, no-op Host API, render/audio 제외. |
+| gorisanson/pikachu-volleyball | Node.js `physics.js` | `core_physics_tick` | 59.428 ms | 4.21M/s | 원본 로직 기반 physics tick, render/audio 제외. |
+| NomaDamas/Pikatchu-Volleyball-Rust | Rust `pikachu_core` | `core_physics_tick` | 57.703 ms | 4.33M/s | Rust core physics tick, macroquad render/audio 제외. |
+| Umkachu Volleyball | Rust Umlang VM | `umlang_micro_assign_expr` | 47.113 ms | 3.27M/s | 합성 `.umm` VM workload, 게임 FPS 아님. |
+| Umkachu Volleyball | Node.js Umlang runner | `umlang_micro_assign_expr` | 78.481 ms | 1.42M/s | 대체 엄랭 실행기 기준점. |
+| Umkachu Volleyball | Python-style Umlang runner | `umlang_micro_assign_expr` | 190.298 ms | 571.1K/s | 대체 엄랭 실행기 기준점. |
+| Umkachu Volleyball | Rust Umlang VM | `umlang_vm_frame_yield` | 1773.705 ms | 6.6K/s | 커밋된 `scripts/pikachu.umm`, no-op Host API, render/audio 제외. |
 
 이 결과가 피카츄 배구 포팅에 주는 의미는 단순합니다. 엄카츄는 `.umm` 텍스트가 크기 때문에, VM이 한글/엄랭
 소스를 얼마나 빨리 읽고 내부 instruction으로 바꾸는지가 중요합니다. Rust VM은 Host API와 그래픽/audio

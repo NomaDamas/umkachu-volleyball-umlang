@@ -252,6 +252,7 @@ def rust_core_tick(rust_repo):
 
 def umkachu_rows():
     files, loc, bytes_ = source_stats(ROOT / "scripts", {".umm"})
+    benchmark_ref = "local benchmark workspace"
     run([sys.executable, str(ROOT / "tools" / "bench_umlang_runtimes.py")], ROOT, timeout=600)
     rows = []
     with (BENCH_DIR / "umlang-runtime-results.csv").open(newline="", encoding="utf-8") as handle:
@@ -268,7 +269,7 @@ def umkachu_rows():
                     "Umkachu Volleyball",
                     runtime,
                     "https://github.com/NomaDamas/umkachu-volleyball-umlang",
-                    git_rev(ROOT),
+                    benchmark_ref,
                     "umlang_micro_assign_expr",
                     result["iterations"],
                     result["units"],
@@ -300,7 +301,7 @@ def umkachu_rows():
             "Umkachu Volleyball",
             "Rust Umlang VM",
             "https://github.com/NomaDamas/umkachu-volleyball-umlang",
-            git_rev(ROOT),
+            benchmark_ref,
             "umlang_vm_frame_yield",
             result["iterations"],
             result["units"],
