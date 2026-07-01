@@ -2,7 +2,7 @@
   <img src="docs/images/umkachu-volleyball-banner-ko.png" alt="엄카츄 배구 배너" width="100%">
 </p>
 
-<h1 align="center">⚡ 엄카츄 배구 엄랭 ⚡</h1>
+<h1 align="center">⚡ 엄카츄 배구 ⚡</h1>
 
 <p align="center">
   <strong>피카츄배구를 커밋된 엄랭 게임 패키지로 실행하는 Rust 엄랭 VM 프로젝트.</strong>
