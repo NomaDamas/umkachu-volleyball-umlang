@@ -1,0 +1,6 @@
+/target/
+.DS_Store
+__pycache__/
+*.py[cod]
+/scripts/pikachu.umm
+/scripts/pikachu.umm.tmp

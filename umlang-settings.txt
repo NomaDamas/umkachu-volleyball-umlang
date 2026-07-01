@@ -1,0 +1,7 @@
+# setting_name=setting_key,default_value,allowed_values
+winning_score=1,15,5|10|15
+practice_mode=2,0,0|1
+bgm_on=3,1,0|1
+sfx_mode=4,2,0|1|2
+soft_graphics=5,0,0|1
+target_fps=6,25,20|25|30

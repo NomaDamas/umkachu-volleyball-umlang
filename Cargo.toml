@@ -1,0 +1,19 @@
+[package]
+name = "umkachu-volleyball-umlang"
+version = "0.1.0"
+edition = "2021"
+license = "UNLICENSED"
+
+[dependencies]
+macroquad = { version = "0.4", features = ["audio"] }
+
+[[bin]]
+name = "umkachu-volleyball-umlang"
+path = "src/main.rs"
+test = false
+
+[profile.dev]
+incremental = false
+
+[profile.test]
+incremental = false

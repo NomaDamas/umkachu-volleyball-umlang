@@ -1,0 +1,9 @@
+# Generic umlang runner manifest.
+main=scripts/pikachu.umm
+asset_root=assets
+max_steps_per_frame=800000
+settings_prefix=.umlang-settings
+window_title=엄랭카츄 배구
+window_width=864
+window_height=608
+high_dpi=true

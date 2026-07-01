@@ -1,0 +1,18 @@
+# Game SFX event ABI used by the generated Pikachu Volleyball 엄랭 script.
+# round_event_N=flag_variable,sound_id,side
+# ui_event_N=flag_variable,sound_id,side
+# side: -1=left, 0=center, 1=right, ball_x=derive side from BALL_X vs MID_X
+round_event_p1_pipikachu=P1_SOUND_PIPIKACHU,1,-1
+round_event_p2_pipikachu=P2_SOUND_PIPIKACHU,1,1
+round_event_p1_pika=P1_SOUND_PIKA,2,-1
+round_event_p2_pika=P2_SOUND_PIKA,2,1
+round_event_p1_chu=P1_SOUND_CHU,3,-1
+round_event_p2_chu=P2_SOUND_CHU,3,1
+round_event_ball_power_hit=BALL_SOUND_POWER_HIT,6,ball_x
+round_event_ball_ground=BALL_SOUND_GROUND,7,ball_x
+
+ui_event_pi=UI_SOUND_PI,4,0
+ui_event_pikachu=UI_SOUND_PIKACHU,5,0
+
+# Immediate SFX emitted when a player jumps rather than through a frame-end flag.
+jump_sound=3,0

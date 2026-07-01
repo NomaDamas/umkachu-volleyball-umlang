@@ -1,0 +1,14 @@
+# Player animation ABI used by the generated Pikachu Volleyball 엄랭 script.
+# player_anim_state_N=frame_counter_divisor,frame_modulo
+player_anim_state_0=4,5
+player_anim_state_1=5,3
+player_anim_state_2=3,5
+
+# player_draw_state_N=sprite_index_by_frame
+player_draw_state_0=0,1,2,3,4
+player_draw_state_1=5,6,7
+player_draw_state_2=10,11,12,13,14
+player_draw_state_3=15
+player_draw_state_4=17
+player_draw_state_5=18,19,20,21,22
+player_draw_state_6=23,24,25,26,27

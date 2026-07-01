@@ -1,0 +1,25 @@
+# Menu animation ABI used by the generated Pikachu Volleyball 엄랭 script.
+sitting_grid=4,6
+sitting_scroll=2,104,2
+
+fight_grow_frames=30
+fight_size_cycle=20,22,25,27,30,27,25,22,20
+fight_anchor=200,140
+fight_width_divisor=2
+fight_scale=4
+
+title_phase_frames=30,44,55,71
+title_slide_speed=30
+title_slide_offset=390
+title_squash_speed=30
+title_squash_width=400
+title_stretch_speed=30
+title_stretch_base_width=80
+
+option_no_input_clamp=0,7
+option_size_diff_base=3
+option_expand_bias=2
+option_x_multiplier=2
+option_width_multiplier=4
+option_y_multiplier=2
+option_height_multiplier=4

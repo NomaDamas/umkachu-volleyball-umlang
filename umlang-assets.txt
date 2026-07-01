@@ -1,0 +1,15 @@
+# Package-owned game asset and slot ABI.
+settings_profile=pikachu-volleyball
+sprite_texture_slot=1
+sprite_texture=sprite_sheet.png
+bgm_audio_slot=1
+bgm_audio=bgm.wav
+sfx_base_slot=1000
+sfx_sound_stride=100
+sfx_mode_stride=10
+sfx_mono_mode=1
+sfx_stereo_mode=2
+sfx_left_side_code=1
+sfx_center_side_code=2
+sfx_right_side_code=3
+sfx_waves=140,141,142,143,144,145,146

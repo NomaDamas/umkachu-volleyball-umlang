@@ -1,0 +1,20 @@
+# Player state machine ABI used by the generated Pikachu Volleyball 엄랭 script.
+state_normal=0
+state_jump=1
+state_power_hit=2
+state_diving=3
+state_lying=4
+state_win=5
+state_lose=6
+
+lie_timer_initial=3
+lie_timer_stand_threshold=-1
+jump_frame_modulo=3
+power_hit_start_delay=5
+power_hit_delay_threshold=1
+power_hit_last_frame=4
+normal_swing_delay_limit=3
+normal_swing_frame_min=0
+normal_swing_frame_max=4
+game_end_anim_last_frame=4
+game_end_anim_delay_limit=4
