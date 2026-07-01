@@ -265,19 +265,29 @@ Future Work는 더 한국어다운 프로그래밍 언어를 실험하는 방향
 도달하는 시간을 분리해서 봅니다.
 
 <p align="center">
-  <img src="docs/benchmarks/umlang-throughput.svg" alt="Umlang runtime throughput benchmark graph">
+  <img src="docs/benchmarks/umlang-throughput.svg" alt="Umkachu Umlang VM throughput benchmark graph">
 </p>
-<p align="center"><em>Figure 1. 언어별 엄랭 VM 처리량 비교: Rust, Node.js, Python 스타일 실행기.</em></p>
+<p align="center"><em>Figure 1. Umkachu Umlang VM throughput 비교: Rust, Node.js, Python 스타일 실행기.</em></p>
 
 <p align="center">
-  <img src="docs/benchmarks/umlang-total-latency.svg" alt="Umlang runtime total latency benchmark graph">
+  <img src="docs/benchmarks/umlang-total-latency.svg" alt="Umkachu Umlang VM total latency benchmark graph">
 </p>
-<p align="center"><em>Figure 2. 언어별 엄랭 VM 총 지연 시간 비교: parse + lazy compile + execute.</em></p>
+<p align="center"><em>Figure 2. Umkachu Umlang VM total latency 비교: parse + lazy compile + execute.</em></p>
 
 측정은 이렇게 했습니다. [`tools/bench_umlang_runtimes.py`](tools/bench_umlang_runtimes.py)가 release Rust 벤치 바이너리
 [`src/bin/um_bench.rs`](src/bin/um_bench.rs)를 빌드하고, 같은 엄랭 micro workload를 Rust/Node.js/Python 구현으로
 각각 실행합니다. 추가로 Rust VM은 실제 [`scripts/pikachu.umm`](scripts/pikachu.umm)을 no-op Host API로 실행해서
 첫 frame yield까지 걸리는 시간을 잽니다.
+
+### Umkachu Umlang VM throughput 표
+
+| 실행기 | workload | 처리량 | Rust 기준 | 의미 |
+| --- | --- | ---: | ---: | --- |
+| Rust | 100,000 Umkachu/Umlang assignment-expression ops | 3,501,623 instr/s | 1.00x | 현재 엄카츄 패키지가 쓰는 기준 VM. |
+| Node.js | 100,000 Umkachu/Umlang assignment-expression ops | 1,462,814 instr/s | 0.42x | Node backend를 만들 때 보는 JavaScript 실행기 신호. |
+| Python | 100,000 Umkachu/Umlang assignment-expression ops | 553,960 instr/s | 0.16x | 스크립팅 중심 실행기 실험용 기준점. |
+
+### 전체 Benchmark 표
 
 | Runtime | Workload | 평균 parse | 평균 run | 평균 total | 처리량 |
 | --- | --- | ---: | ---: | ---: | ---: |
