@@ -1,4 +1,4 @@
-# Game SFX event ABI used by the generated Pikachu Volleyball 엄랭 script.
+# Game SFX event ABI used by the Umkachu Volleyball 엄랭 package.
 # round_event_N=flag_variable,sound_id,side
 # ui_event_N=flag_variable,sound_id,side
 # side: -1=left, 0=center, 1=right, ball_x=derive side from BALL_X vs MID_X

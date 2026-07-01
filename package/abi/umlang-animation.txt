@@ -1,4 +1,4 @@
-# Player animation ABI used by the generated Pikachu Volleyball 엄랭 script.
+# Player animation ABI used by the Umkachu Volleyball 엄랭 package.
 # player_anim_state_N=frame_counter_divisor,frame_modulo
 player_anim_state_0=4,5
 player_anim_state_1=5,3

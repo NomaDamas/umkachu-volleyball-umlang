@@ -1,4 +1,4 @@
-# VM variable slot ABI used by the generated Pikachu Volleyball 엄랭 script.
+# VM variable slot ABI used by the Umkachu Volleyball 엄랭 package.
 P1_X=20
 P1_Y=21
 P1_DX=22

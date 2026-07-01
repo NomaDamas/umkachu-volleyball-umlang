@@ -1,6 +1,7 @@
 use std::fs;
 
-pub const DEFAULT_MANIFEST_PATH: &str = "umlang-package.txt";
+pub const ABI_DIR: &str = "package/abi";
+pub const DEFAULT_MANIFEST_PATH: &str = "package/abi/umlang-package.txt";
 pub const DEFAULT_ASSET_ROOT: &str = "assets";
 pub const DEFAULT_MAX_STEPS_PER_FRAME: usize = 200_000;
 pub const DEFAULT_SETTINGS_PREFIX: &str = ".umlang-settings";

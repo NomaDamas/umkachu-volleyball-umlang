@@ -1,4 +1,4 @@
-# Menu animation ABI used by the generated Pikachu Volleyball 엄랭 script.
+# Menu animation ABI used by the Umkachu Volleyball 엄랭 package.
 sitting_grid=4,6
 sitting_scroll=2,104,2
 

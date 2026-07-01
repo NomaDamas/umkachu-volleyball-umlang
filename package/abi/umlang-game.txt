@@ -1,4 +1,4 @@
-# Game constants ABI used by the generated Pikachu Volleyball 엄랭 script.
+# Game constants ABI used by the Umkachu Volleyball 엄랭 package.
 SCREEN_SCALE=2
 GROUND_WIDTH_SCREEN=864
 GROUND_HALF_WIDTH_SCREEN=432

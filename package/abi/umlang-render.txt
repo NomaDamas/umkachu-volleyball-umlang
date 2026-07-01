@@ -1,4 +1,4 @@
-# Render layout ABI used by the generated Pikachu Volleyball 엄랭 script.
+# Render layout ABI used by the Umkachu Volleyball 엄랭 package.
 background_sky_tile=156,2,16,16,32,32
 background_sky_y_range=0,384,32
 background_ground=2,200,432,64,0,376,864,128

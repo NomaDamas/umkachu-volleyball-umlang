@@ -1,4 +1,4 @@
-# Sprite atlas frame ABI used by the generated Pikachu Volleyball 엄랭 script.
+# Sprite atlas frame ABI used by the Umkachu Volleyball 엄랭 package.
 PLAYER_FRAME_0=2,266,64,64
 PLAYER_FRAME_1=68,266,64,64
 PLAYER_FRAME_2=134,266,64,64

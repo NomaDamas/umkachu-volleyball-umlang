@@ -1,4 +1,4 @@
-# Phase and presentation timing ABI used by the generated Pikachu Volleyball 엄랭 script.
+# Phase and presentation timing ABI used by the Umkachu Volleyball 엄랭 package.
 intro_fade_in_end=100
 intro_fade_out_start=124
 intro_fade_denominator=25

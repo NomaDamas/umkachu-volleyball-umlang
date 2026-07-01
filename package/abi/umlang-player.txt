@@ -1,4 +1,4 @@
-# Player state machine ABI used by the generated Pikachu Volleyball 엄랭 script.
+# Player state machine ABI used by the Umkachu Volleyball 엄랭 package.
 state_normal=0
 state_jump=1
 state_power_hit=2
